@@ -13,10 +13,7 @@ var db = mongoose.connection;
 //Bind connection to error event (to get notification of connection errors)
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
-//-------------------------------------//
-
 //DEFINE SCHEMAS //
-
 var Schema = mongoose.Schema;
 
 var goalSchema = new Schema({
@@ -65,14 +62,14 @@ app.get('/listGoal', function(req, res){
     });
 });
 
+ //return createTask.html file to caller
+ app.get('/createTask', function(req, res){
+    res.sendFile('public/html/createTask.html', {root: __dirname});
+ });
+
 //return home page file to caller
 app.get('/home', function(req, res){
     res.render('home');  
-});
-
-//return about page to caller
-app.get('/about', function(req, res){
-    res.render('about');
 });
 
 //accept path "createTask"
@@ -95,9 +92,13 @@ app.post('/createTask', function(req, res) {
         if(err){
             console.log(err);
         }
-    });
-
     res.redirect('/listGoal');
+  })
+});
+
+//return createHabit.html file to caller
+app.get('/createHabit', function(req, res){
+    res.sendFile('public/html/createHabit.html', {root: __dirname});
 });
 
 //accept path "createHabit"
@@ -121,8 +122,88 @@ app.post('/createHabit', function(req, res) {
             console.log(err);
         }
   })
-
 });
+
+//return updateTask.html file to caller
+app.get('/updateTask', function(req, res){
+    goalModel.findOne({"_id": req.query.id}).exec(function(err, goal){
+        if(err){
+            console.log(err);
+        }
+
+        var date = new Date(goal.startDate);
+        formattedDate = date.toISOString().split('T')[0];
+        var result = {'goal': goal, 'date': formattedDate}
+        res.render('updateTask', result)
+
+    });
+});
+//accept path "updateTask"
+app.post('/updateTask', function(req, res) {
+    res.send('Congratulation! You have just updated "' + req.query.id + '".');
+    goalModel.findOneAndUpdate({"_id": req.query.id}, {
+        goalName: req.body.goalName, 
+        goalDescription: req.body.goalDescription,
+        tag:req.body.tag,
+        unitName: req.body.unitName,
+        totalUnit: req.body.totalUnit,
+        startDate: req.body.startDate,
+        projectLength: req.body.projectLength,
+    }).exec(function(err, goal){
+        if(err){
+            console.log(err);
+        }
+    });
+});
+
+app.get('/updateHabit', function(req, res){ 
+    goalModel.findOne({"_id": req.query.id}).exec(function(err, goal){
+        if(err){
+            console.log(err);
+        }
+
+        var date = new Date(goal.startDate);
+        formattedDate = date.toISOString().split('T')[0];
+        var result = {'goal': goal, 'date': formattedDate}
+        res.render('updateHabit', result)
+
+    });
+});
+
+app.post('/updateHabit', function(req, res) {
+    res.send('Congratulation! You have just updated "' + req.query.id + '".');
+    goalModel.findOneAndUpdate({"_id": req.query.id}, {
+        goalName: req.body.goalName, 
+        goalDescription: req.body.goalDescription,
+        tag:req.body.tag,
+        frequency: req.body.frequency,
+        timePeriod: req.body.timePeriod,
+        startDate: req.body.startDate,
+    }).exec(function(err, goal){
+        if(err){
+            console.log(err);
+        }
+    });
+});
+
+app.get('/deleteGoal', function(req, res){
+    res.sendFile('public/html/deleteGoal.html', {root: __dirname})
+});
+
+//accept path "deleteGoal"
+app.delete('/deleteGoal', function(req, res) {
+    res.send('Congratulation! You have just deleted "' + req.body.goalId + '".');
+
+    var goalId = req.body.goalId;
+
+    goalModel.findOneAndDelete({"_id": goalId}).exec(function(err, goals){
+        if(err){
+            console.log(err);
+        }
+    });
+});
+
+
 
 app.listen(8080, function() {
     console.log('Server running at http://127.0.0.1:8080/');
